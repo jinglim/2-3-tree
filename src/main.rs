@@ -5,18 +5,14 @@ use two_three_tree::{Element, TwoThreeTree};
 
 fn insert(tree: &mut TwoThreeTree, key: usize) {
     //println!("== Insert {}", key);
-    tree.insert(Element {
-        key,
-        value: key,
-    });
-    //tree.print();
+    tree.insert(Element { key, value: key });
     tree.validate();
+    assert!(tree.find(key).unwrap().key == key);
 }
 
 fn delete(tree: &mut TwoThreeTree, key: usize) {
     //println!("== Delete {}", key);
     assert!(tree.delete(key));
-    //tree.print();
     tree.validate();
 }
 

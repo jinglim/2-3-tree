@@ -343,36 +343,36 @@ impl TwoThreeTree {
                     Ordering::Less => {
                         Self::delete_node(child1, state);
                         child_num = 1;
-                    },
+                    }
                     Ordering::Greater => {
                         if let Some(elem2) = node.elem2 {
                             match state.key.cmp(&elem2.key) {
                                 Ordering::Less => {
                                     Self::delete_node(node.child2.as_mut().unwrap(), state);
                                     child_num = 2;
-                                },
+                                }
                                 Ordering::Greater => {
                                     Self::delete_node(node.child3.as_mut().unwrap(), state);
                                     child_num = 3;
-                                },
+                                }
                                 Ordering::Equal => {
                                     // Matched. Find successor node.
                                     Self::find_predecessor(node.child2.as_mut().unwrap(), state);
                                     node.elem2 = Some(state.predecessor.unwrap());
                                     child_num = 2;
-                                },
+                                }
                             };
                         } else {
                             Self::delete_node(node.child2.as_mut().unwrap(), state);
                             child_num = 2;
                         }
-                    },
+                    }
                     Ordering::Equal => {
                         // Matched. Find succcessor node.
                         Self::find_predecessor(child1, state);
                         node.elem1 = state.predecessor.unwrap();
                         child_num = 1;
-                    },
+                    }
                 }
             }
         }
@@ -503,6 +503,53 @@ impl TwoThreeTree {
             }
             DeletePhase::Downwards => panic!(),
         }
+    }
+
+    // Finds an element with the given key.
+    pub fn find(&self, key: usize) -> Option<Element> {
+        if let Some(ref root) = self.root {
+            let mut node = root;
+            loop {
+                match key.cmp(&node.elem1.key) {
+                    Ordering::Less => {
+                        if let Some(ref child1) = node.child1 {
+                            node = child1;
+                        } else {
+                            return None;
+                        }
+                    }
+                    Ordering::Greater => {
+                        if let Some(elem2) = node.elem2 {
+                            match key.cmp(&elem2.key) {
+                                Ordering::Less => {
+                                    if let Some(ref child2) = node.child2 {
+                                        node = child2;
+                                    } else {
+                                        return None;
+                                    }
+                                }
+                                Ordering::Greater => {
+                                    if let Some(ref child3) = node.child3 {
+                                        node = child3;
+                                    } else {
+                                        return None;
+                                    }
+                                }
+                                Ordering::Equal => return Some(elem2),
+                            }
+                        } else if let Some(ref child2) = node.child2 {
+                            node = child2;
+                        } else {
+                            return None;
+                        }
+                    }
+                    Ordering::Equal => {
+                        return Some(node.elem1);
+                    }
+                }
+            }
+        }
+        None
     }
 
     // Converts a 2-node to a 3-node, adding a node and child on the left side.
@@ -664,6 +711,9 @@ mod tests {
         });
         tree.print();
         tree.validate();
+
+        let found_element = tree.find(key);
+        assert!(found_element.unwrap().key == key);
     }
 
     fn delete(tree: &mut TwoThreeTree, key: usize) {
@@ -683,6 +733,7 @@ mod tests {
         insert(&mut tree, 4);
         assert!(tree.size() == 5);
         delete(&mut tree, 3);
+        assert!(tree.find(3).is_none());
         delete(&mut tree, 1);
         delete(&mut tree, 2);
         delete(&mut tree, 4);
